@@ -3,6 +3,7 @@ package com.example.opencvtest;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -46,7 +47,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         if (requestCode == CAM_REQ_CODE && grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             loadCamera();
         } else {
@@ -55,11 +55,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     private void loadCamera() {
-
         cameraBridgeViewBase = findViewById(R.id.cameraView);
         cameraBridgeViewBase.setVisibility(View.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
-
 
         baseLoaderCallback = new BaseLoaderCallback(this) {
             @Override
@@ -87,8 +85,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(width, height, CvType.CV_8UC4);
-        intermediaMat = new Mat(width, height, CvType.CV_8UC4);
         mGray = new Mat(width, height, CvType.CV_8UC1);
+        intermediaMat = new Mat(width, height, CvType.CV_8UC4);
         hierarchy = new Mat();
     }
 
@@ -107,12 +105,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mGray = new Mat();
         contours = new ArrayList<>();
 
+
         Imgproc.Canny(mRgba, intermediaMat, 80, 100);
+        //Pointdagi 0 obyektni burchlari siljishi
         Imgproc.findContours(intermediaMat, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
 
         hierarchy.release();
 
         for (int i = 0; i < contours.size(); i++) {
+
             MatOfPoint2f approxCurve = new MatOfPoint2f();
             MatOfPoint2f contour2f = new MatOfPoint2f(contours.get(i).toArray());
 
@@ -120,12 +121,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true);
             MatOfPoint points = new MatOfPoint(approxCurve.toArray());
 
+
+            //u need all of here
             Rect rect = Imgproc.boundingRect(points);
             double height = rect.height;
             double width = rect.width;
 
-
+            //height and width rendering rectangles size
             if (height > 300 && width > 300) {
+
+                Log.d("TAG_CAM_FRAME", "rect.height" + rect.height);
+                Log.d("TAG_CAM_FRAME", "rect.width" + rect.width);
+                Log.d("TAG_CAM_FRAME", "rect.x" + rect.x);
+                Log.d("TAG_CAM_FRAME", "rect.y" + rect.y);
+                Log.d("TAG_CAM_FRAME", "rect.tl()" + rect.tl());
+                Log.d("TAG_CAM_FRAME", "rect.area()" + rect.area());
+
                 Imgproc.rectangle(mRgba, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 0, 0), 5);
                 Imgproc.putText(mRgba, "There is a object ", rect.tl(), Core.FONT_HERSHEY_SCRIPT_SIMPLEX, 2,
                         new Scalar(0, 255, 0, 0), 4);
@@ -138,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onResume() {
         super.onResume();
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) !=
                 PackageManager.PERMISSION_GRANTED) {
 

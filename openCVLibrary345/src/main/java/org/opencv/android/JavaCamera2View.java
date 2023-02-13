@@ -3,6 +3,7 @@ package org.opencv.android;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -83,6 +84,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
         }
     }
 
+    @SuppressLint("MissingPermission")
     protected boolean initializeCamera() {
         Log.i(LOGTAG, "initializeCamera");
         CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);

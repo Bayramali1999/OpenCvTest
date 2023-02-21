@@ -126,9 +126,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Rect rect = Imgproc.boundingRect(points);
             double height = rect.height;
             double width = rect.width;
-
+//            height > 300 && width > 300
             //height and width rendering rectangles size
-            if (height > 300 && width > 300) {
+            int x = rect.x;
+            int y = rect.y;
+            if ((x > 10 && y > 0) && (x < 150 && y < 200)) {
 
                 Log.d("TAG_CAM_FRAME", "rect.height" + rect.height);
                 Log.d("TAG_CAM_FRAME", "rect.width" + rect.width);
@@ -137,8 +139,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Log.d("TAG_CAM_FRAME", "rect.tl()" + rect.tl());
                 Log.d("TAG_CAM_FRAME", "rect.area()" + rect.area());
 
+
                 Imgproc.rectangle(mRgba, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 0, 0), 5);
-                Imgproc.putText(mRgba, "There is a object ", rect.tl(), Core.FONT_HERSHEY_SCRIPT_SIMPLEX, 2,
+                Imgproc.putText(mRgba, "a", rect.tl(), Core.FONT_HERSHEY_SCRIPT_SIMPLEX, 2,
                         new Scalar(0, 255, 0, 0), 4);
             }
         }

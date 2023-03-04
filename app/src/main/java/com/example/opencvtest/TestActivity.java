@@ -1,5 +1,8 @@
 package com.example.opencvtest;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.MediaActionSound;
 import android.os.Bundle;
 import android.os.Environment;
@@ -7,9 +10,12 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -26,6 +32,7 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -40,13 +47,26 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 
     Button button;
 
+    int PERMISSION_ALL = 1;
+
+    String[] PERMISSIONS = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA, 
+    };
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
+
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        }
+
         //initialize treshold
         threshold = 100;
-
         cameraBridgeViewBase = findViewById(R.id.cameraViewer);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
@@ -76,21 +96,44 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         };
 
-        button = findViewById(R.id.took);
+    }
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                MediaActionSound mediaActionSound = new MediaActionSound();
-                mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
-
-                Date date = new Date();
-                String currentTime = date.toString();
-                String fileName = Environment.getExternalStorageDirectory().getPath() + "/sample_file_pic_" + currentTime + ".jpeg";
-                cameraBridgeViewBase.takePicture(fileName);
+    private boolean hasPermissions(Context context, String[] permissions) {
+        if (context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
             }
-        });
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_ALL && grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+
+            button = findViewById(R.id.took);
+
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ImageView imageView = findViewById(R.id.iv);
+
+                    MediaActionSound mediaActionSound = new MediaActionSound();
+                    mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
+
+                    Date date = new Date();
+                    long currentTime = Calendar.getInstance().getTimeInMillis();
+                    String fileName = Environment.getExternalStorageDirectory().getPath() + "/sample_file_pic_" + currentTime + ".jpeg";
+
+                    cameraBridgeViewBase.takePicture(fileName, imageView);
+                }
+            });
+        }
     }
 
     @Override

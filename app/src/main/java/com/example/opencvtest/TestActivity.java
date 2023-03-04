@@ -1,26 +1,21 @@
 package com.example.opencvtest;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.media.MediaActionSound;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.SurfaceView;
-import android.view.ViewTreeObserver;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -32,31 +27,27 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class TestActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    //view holder
-    CameraBridgeViewBase cameraBridgeViewBase;
-
-    //camera listener callback
+    MyCameraJava cameraBridgeViewBase;
     BaseLoaderCallback baseLoaderCallback;
-
     //image holder
     Mat bwIMG, hsvIMG, lrrIMG, urrIMG, dsIMG, usIMG, cIMG, hovIMG;
     MatOfPoint2f approxCurve;
-
     int threshold;
 
-    @SuppressLint("MissingInflatedId")
+    Button button;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
-
         //initialize treshold
         threshold = 100;
 
-        cameraBridgeViewBase = (JavaCameraView) findViewById(R.id.cameraViewer);
+        cameraBridgeViewBase = findViewById(R.id.cameraViewer);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
 
@@ -85,6 +76,21 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         };
 
+        button = findViewById(R.id.took);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                MediaActionSound mediaActionSound = new MediaActionSound();
+                mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
+
+                Date date = new Date();
+                String currentTime = date.toString();
+                String fileName = Environment.getExternalStorageDirectory().getPath() + "/sample_file_pic_" + currentTime + ".jpeg";
+                cameraBridgeViewBase.takePicture(fileName);
+            }
+        });
     }
 
     @Override
@@ -99,7 +105,6 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
         Mat gray = inputFrame.gray();
         Mat dst = inputFrame.rgba();
 
@@ -115,7 +120,6 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         cIMG = bwIMG.clone();
 
         Imgproc.findContours(cIMG, contours, hovIMG, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
 
         for (MatOfPoint cnt : contours) {
 
@@ -202,5 +206,4 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         Point pt = new Point(r.x + ((r.width - text.width) / 2), r.y + ((r.height + text.height) / 2));
         Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
     }
-
 }

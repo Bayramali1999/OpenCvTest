@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,8 +17,6 @@ import androidx.core.content.ContextCompat;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -43,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     View view;
 
+    Button button;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         setContentView(R.layout.activity_main);
 
         view = findViewById(R.id.l_corner_view);
+
     }
 
 
@@ -141,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //            view.setX(rect.x);
 //            view.setY(rect.y);
 
-            if (width>200 && height>200) {
+            if (width > 200 && height > 200) {
 
                 Log.d("TAG_CAM_FRAME", "rect.height" + rect.height);
                 Log.d("TAG_CAM_FRAME", "rect.width" + rect.width);

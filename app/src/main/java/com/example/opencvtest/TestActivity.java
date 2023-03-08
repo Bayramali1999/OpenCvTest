@@ -1,12 +1,14 @@
 package com.example.opencvtest;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaActionSound;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Display;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
@@ -15,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -49,17 +52,31 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 
     int PERMISSION_ALL = 1;
 
-    String[] PERMISSIONS = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA, 
-    };
+    String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA,};
+    int displayWidth;
+    int displayHeight;
+//    ConstraintLayout layoutContainer;
 
+    //    @SuppressLint("MissingInflatedId")
+    View rTopView;
+    ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
+        imageView = findViewById(R.id.iv);
+
+        rTopView = findViewById(R.id.r_top);
+        Display display = getWindowManager().getDefaultDisplay();
+        android.graphics.Point size = new android.graphics.Point();
+        display.getSize(size);
+
+        displayWidth = size.x;
+        displayHeight = size.y;
+
+        Log.d("TAG_WINDOW", "onCreate: x = " + displayWidth + "y = " + displayHeight);
+
 
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
@@ -71,13 +88,13 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
 
+
         //create camera listener callback
         baseLoaderCallback = new BaseLoaderCallback(this) {
             @Override
             public void onManagerConnected(int status) {
                 switch (status) {
                     case LoaderCallbackInterface.SUCCESS:
-                        Log.v("aashari-log", "Loader interface success");
                         bwIMG = new Mat();
                         dsIMG = new Mat();
                         hsvIMG = new Mat();
@@ -96,6 +113,30 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
             }
         };
 
+        button = findViewById(R.id.took);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                MediaActionSound mediaActionSound = new MediaActionSound();
+                mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
+
+                Date date = new Date();
+                long currentTime = Calendar.getInstance().getTimeInMillis();
+                String fileName = Environment.getExternalStorageDirectory().getPath() + "/sample_file_pic_" + currentTime + ".jpeg";
+
+                cameraBridgeViewBase.takePicture(fileName, imageView);
+            }
+        });
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getSupportFragmentManager().beginTransaction().replace(R.id.con, new BlankFragment()).commit();
+//                imageView.get
+            }
+        });
     }
 
     private boolean hasPermissions(Context context, String[] permissions) {
@@ -116,23 +157,6 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         if (requestCode == PERMISSION_ALL && grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
 
-            button = findViewById(R.id.took);
-
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ImageView imageView = findViewById(R.id.iv);
-
-                    MediaActionSound mediaActionSound = new MediaActionSound();
-                    mediaActionSound.play(MediaActionSound.SHUTTER_CLICK);
-
-                    Date date = new Date();
-                    long currentTime = Calendar.getInstance().getTimeInMillis();
-                    String fileName = Environment.getExternalStorageDirectory().getPath() + "/sample_file_pic_" + currentTime + ".jpeg";
-
-                    cameraBridgeViewBase.takePicture(fileName, imageView);
-                }
-            });
         }
     }
 
@@ -163,7 +187,8 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         cIMG = bwIMG.clone();
 
         Imgproc.findContours(cIMG, contours, hovIMG, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
+        Log.d("TAG_TEST_NEW_RENDER", "onCameraFrame: ");
+        rTopView.setBackgroundResource(R.drawable.rectangel_red);
         for (MatOfPoint cnt : contours) {
 
             MatOfPoint2f curve = new MatOfPoint2f(cnt.toArray());
@@ -247,6 +272,12 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         Size text = Imgproc.getTextSize(label, fontface, scale, thickness, baseline);
         Rect r = Imgproc.boundingRect(contour);
         Point pt = new Point(r.x + ((r.width - text.width) / 2), r.y + ((r.height + text.height) / 2));
-        Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
+        //todo you can check view with x and y
+        if ((r.x >= 0 && r.x < 60) && (r.y >= 0 && r.y <= 80)) {
+            Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
+            rTopView.setBackgroundResource(R.drawable.rectangel_gree);
+        }
+
+        Log.d("TAG_MAX", "setLabel: x = " + r.x + " y = " + r.y);
     }
 }

@@ -39,37 +39,33 @@
 
     <View
         android:id="@+id/l_top"
-        android:layout_width="80dp"
+        android:layout_width="70dp"
         android:layout_height="60dp"
         android:background="@drawable/rectangel_red"
-        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <View
         android:id="@+id/r_top"
-        android:layout_width="80dp"
+        android:layout_width="70dp"
         android:layout_height="60dp"
-        android:layout_marginTop="80dp"
         android:background="@drawable/rectangel_red"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <View
-        android:id="@+id/l_bottom"
-        android:layout_width="80dp"
+        android:id="@+id/r_bottom"
+        android:layout_width="70dp"
         android:layout_height="60dp"
         android:background="@drawable/rectangel_red"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <View
-        android:id="@+id/r_bottom"
-        android:layout_width="80dp"
+        android:id="@+id/l_bottom"
+        android:layout_width="70dp"
         android:layout_height="60dp"
         android:background="@drawable/rectangel_red"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

@@ -1,14 +1,14 @@
 package com.example.opencvtest;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.media.MediaActionSound;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
-import android.view.Display;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
@@ -58,62 +58,16 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 //    ConstraintLayout layoutContainer;
 
     //    @SuppressLint("MissingInflatedId")
-    View rTopView;
+    View rTopView, lTopView, rBottomView, lBottomView;
     ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
-        imageView = findViewById(R.id.iv);
 
-        rTopView = findViewById(R.id.r_top);
-        Display display = getWindowManager().getDefaultDisplay();
-        android.graphics.Point size = new android.graphics.Point();
-        display.getSize(size);
-
-        displayWidth = size.x;
-        displayHeight = size.y;
-
-        Log.d("TAG_WINDOW", "onCreate: x = " + displayWidth + "y = " + displayHeight);
-
-
-        if (!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
-        }
-
-        //initialize treshold
-        threshold = 100;
-        cameraBridgeViewBase = findViewById(R.id.cameraViewer);
-        cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
-        cameraBridgeViewBase.setCvCameraViewListener(this);
-
-
-        //create camera listener callback
-        baseLoaderCallback = new BaseLoaderCallback(this) {
-            @Override
-            public void onManagerConnected(int status) {
-                switch (status) {
-                    case LoaderCallbackInterface.SUCCESS:
-                        bwIMG = new Mat();
-                        dsIMG = new Mat();
-                        hsvIMG = new Mat();
-                        lrrIMG = new Mat();
-                        urrIMG = new Mat();
-                        usIMG = new Mat();
-                        cIMG = new Mat();
-                        hovIMG = new Mat();
-                        approxCurve = new MatOfPoint2f();
-                        cameraBridgeViewBase.enableView();
-                        break;
-                    default:
-                        super.onManagerConnected(status);
-                        break;
-                }
-            }
-        };
-
-        button = findViewById(R.id.took);
+        initView();
+        setRectanglesPositionOnView();
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -137,6 +91,85 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 //                imageView.get
             }
         });
+    }
+
+    private void setRectanglesPositionOnView() {
+        double proportion = 268.0 / 213.0;
+        int titleHeight = (int) (displayWidth * proportion);
+        int titleWidth = displayWidth;
+        int marginByHeight = (displayHeight - titleHeight) / 2;
+
+        Resources resources = getResources();
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, marginByHeight, resources.getDisplayMetrics());
+
+
+        ConstraintLayout.LayoutParams mLeftTop = (ConstraintLayout.LayoutParams) lTopView.getLayoutParams();
+        mLeftTop.setMargins(0, px, 0, 0);
+        lTopView.setLayoutParams(mLeftTop);
+        ConstraintLayout.LayoutParams mRightTop = (ConstraintLayout.LayoutParams) rTopView.getLayoutParams();
+        mRightTop.setMargins(0, px, 0, 0);
+        rTopView.setLayoutParams(mRightTop);
+
+        ConstraintLayout.LayoutParams mRightBottom = (ConstraintLayout.LayoutParams) rBottomView.getLayoutParams();
+        mRightBottom.setMargins(0, 0, 0, px);
+        rBottomView.setLayoutParams(mRightBottom);
+
+        ConstraintLayout.LayoutParams mLeftBottom = (ConstraintLayout.LayoutParams) lBottomView.getLayoutParams();
+        mLeftBottom.setMargins(0, 0, 0, px);
+        lBottomView.setLayoutParams(mLeftBottom);
+
+        
+
+    }
+
+    private void initView() {
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        displayWidth = (int) (displayMetrics.widthPixels / displayMetrics.density);
+        displayHeight = (int) (displayMetrics.heightPixels / displayMetrics.density);
+
+        imageView = findViewById(R.id.iv);
+        rTopView = findViewById(R.id.r_top);
+        lTopView = findViewById(R.id.l_top);
+        lBottomView = findViewById(R.id.l_bottom);
+        rBottomView = findViewById(R.id.r_bottom);
+        button = findViewById(R.id.took);
+        cameraBridgeViewBase = findViewById(R.id.cameraViewer);
+
+
+        if (!hasPermissions(this, PERMISSIONS)) {
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        }
+
+        threshold = 100;
+        cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
+        cameraBridgeViewBase.setCvCameraViewListener(this);
+
+        baseLoaderCallback = new BaseLoaderCallback(this) {
+            @Override
+            public void onManagerConnected(int status) {
+                switch (status) {
+                    case LoaderCallbackInterface.SUCCESS:
+                        bwIMG = new Mat();
+                        dsIMG = new Mat();
+                        hsvIMG = new Mat();
+                        lrrIMG = new Mat();
+                        urrIMG = new Mat();
+                        usIMG = new Mat();
+                        cIMG = new Mat();
+                        hovIMG = new Mat();
+                        approxCurve = new MatOfPoint2f();
+                        cameraBridgeViewBase.enableView();
+                        break;
+                    default:
+                        super.onManagerConnected(status);
+                        break;
+                }
+            }
+        };
+
     }
 
     private boolean hasPermissions(Context context, String[] permissions) {
@@ -187,8 +220,11 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         cIMG = bwIMG.clone();
 
         Imgproc.findContours(cIMG, contours, hovIMG, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        Log.d("TAG_TEST_NEW_RENDER", "onCameraFrame: ");
+
         rTopView.setBackgroundResource(R.drawable.rectangel_red);
+        lTopView.setBackgroundResource(R.drawable.rectangel_red);
+        rBottomView.setBackgroundResource(R.drawable.rectangel_red);
+        lBottomView.setBackgroundResource(R.drawable.rectangel_red);
         for (MatOfPoint cnt : contours) {
 
             MatOfPoint2f curve = new MatOfPoint2f(cnt.toArray());
@@ -218,6 +254,7 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
                 double maxcos = cos.get(cos.size() - 1);
 
                 if (numberVertices == 4 && mincos >= -0.1 && maxcos <= 0.3) {
+                    //
                     setLabel(dst, "X", cnt);
                 }
 
@@ -278,6 +315,5 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
             rTopView.setBackgroundResource(R.drawable.rectangel_gree);
         }
 
-        Log.d("TAG_MAX", "setLabel: x = " + r.x + " y = " + r.y);
     }
 }

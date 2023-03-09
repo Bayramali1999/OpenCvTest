@@ -44,6 +44,7 @@ public class MyCameraJava extends JavaCameraView implements Camera.PictureCallba
         mCamera.setPreviewCallback(this);
 
         Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+        imageView.setVisibility(VISIBLE);
         imageView.setImageBitmap(bitmap);
         try {
             FileOutputStream fos = new FileOutputStream(mPictureFileName);

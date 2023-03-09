@@ -8,6 +8,7 @@ import android.media.MediaActionSound;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.SurfaceView;
 import android.view.View;
@@ -55,6 +56,10 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
     String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA,};
     int displayWidth;
     int displayHeight;
+    int titleHeight;
+    int titleWidth;
+    int marginLengthOnDP;
+
 //    ConstraintLayout layoutContainer;
 
     //    @SuppressLint("MissingInflatedId")
@@ -95,31 +100,30 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 
     private void setRectanglesPositionOnView() {
         double proportion = 268.0 / 213.0;
-        int titleHeight = (int) (displayWidth * proportion);
-        int titleWidth = displayWidth;
-        int marginByHeight = (displayHeight - titleHeight) / 2;
+
+        titleHeight = (int) (displayWidth * proportion);
+        titleWidth = displayWidth;
+
+        marginLengthOnDP = (displayHeight - titleHeight) / 2;
 
         Resources resources = getResources();
-        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, marginByHeight, resources.getDisplayMetrics());
+        int marginLengthOnPX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, marginLengthOnDP, resources.getDisplayMetrics());
 
 
         ConstraintLayout.LayoutParams mLeftTop = (ConstraintLayout.LayoutParams) lTopView.getLayoutParams();
-        mLeftTop.setMargins(0, px, 0, 0);
+        mLeftTop.setMargins(0, marginLengthOnPX, 0, 0);
         lTopView.setLayoutParams(mLeftTop);
         ConstraintLayout.LayoutParams mRightTop = (ConstraintLayout.LayoutParams) rTopView.getLayoutParams();
-        mRightTop.setMargins(0, px, 0, 0);
+        mRightTop.setMargins(0, marginLengthOnPX, 0, 0);
         rTopView.setLayoutParams(mRightTop);
 
         ConstraintLayout.LayoutParams mRightBottom = (ConstraintLayout.LayoutParams) rBottomView.getLayoutParams();
-        mRightBottom.setMargins(0, 0, 0, px);
+        mRightBottom.setMargins(0, 0, 0, marginLengthOnPX);
         rBottomView.setLayoutParams(mRightBottom);
 
         ConstraintLayout.LayoutParams mLeftBottom = (ConstraintLayout.LayoutParams) lBottomView.getLayoutParams();
-        mLeftBottom.setMargins(0, 0, 0, px);
+        mLeftBottom.setMargins(0, 0, 0, marginLengthOnPX);
         lBottomView.setLayoutParams(mLeftBottom);
-
-        
-
     }
 
     private void initView() {
@@ -137,6 +141,7 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         rBottomView = findViewById(R.id.r_bottom);
         button = findViewById(R.id.took);
         cameraBridgeViewBase = findViewById(R.id.cameraViewer);
+        cameraBridgeViewBase.setMaxFrameSize(640, 480);
 
 
         if (!hasPermissions(this, PERMISSIONS)) {
@@ -203,12 +208,13 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
 
     }
 
+
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat gray = inputFrame.gray();
         Mat dst = inputFrame.rgba();
 
-        Imgproc.pyrDown(gray, dsIMG, new Size(gray.cols() / 2, gray.rows() / 2));
+        Imgproc.pyrDown(gray, dsIMG, new Size(gray.cols() / 2.0, gray.rows() / 2.0));
         Imgproc.pyrUp(dsIMG, usIMG, gray.size());
 
         Imgproc.Canny(usIMG, bwIMG, 0, threshold);
@@ -308,12 +314,15 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         int[] baseline = new int[1];
         Size text = Imgproc.getTextSize(label, fontface, scale, thickness, baseline);
         Rect r = Imgproc.boundingRect(contour);
+
+        Log.d("TAG_RECT", "setLabel: x = " + r.width + " Y = " + r.height);
         Point pt = new Point(r.x + ((r.width - text.width) / 2), r.y + ((r.height + text.height) / 2));
         //todo you can check view with x and y
         if ((r.x >= 0 && r.x < 60) && (r.y >= 0 && r.y <= 80)) {
             Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
             rTopView.setBackgroundResource(R.drawable.rectangel_gree);
         }
+
 
     }
 }

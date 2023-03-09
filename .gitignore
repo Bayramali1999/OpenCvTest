@@ -17,3 +17,4 @@ local.properties
 # Project exclude paths
 /openCVLibrary345/build/
 /openCVLibrary345/build/intermediates/javac/debug/classes/
+app/src/main/java/com/example/opencvtest/CameraPreview.java

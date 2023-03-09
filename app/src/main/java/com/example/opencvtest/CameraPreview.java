@@ -98,7 +98,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
                 }
             }
         }
-        return null;
+        return optimalSize;
     }
 
 }

@@ -201,6 +201,8 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCameraViewStarted(int width, int height) {
 
+        Log.d("TAG_CAMERA_EW", "onCameraViewStarted: " + width + " height: " + height);
+        Log.d("TAG_CAMERA_EW", "onCameraViewStarted: " + titleWidth + " height: " + titleHeight);
     }
 
     @Override
@@ -318,9 +320,12 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         Log.d("TAG_RECT", "setLabel: x = " + r.width + " Y = " + r.height);
         Point pt = new Point(r.x + ((r.width - text.width) / 2), r.y + ((r.height + text.height) / 2));
         //todo you can check view with x and y
-        if ((r.x >= 0 && r.x < 60) && (r.y >= 0 && r.y <= 80)) {
+        Log.d("TAG_DRAW_X", "setLabel: "+r.x+" "+r.y);
+
+        if ((r.x >= 600 && r.x < 640) && (r.y >= 400 && r.y <= 480)) {
             Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
             rTopView.setBackgroundResource(R.drawable.rectangel_gree);
+
         }
 
 

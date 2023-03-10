@@ -60,6 +60,9 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
     int titleWidth;
     int marginLengthOnDP;
 
+
+    int cameraScreenHeight = 0;
+    int cameraScreenWidth = 0;
 //    ConstraintLayout layoutContainer;
 
     //    @SuppressLint("MissingInflatedId")
@@ -147,8 +150,8 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         if (!hasPermissions(this, PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
-
-        threshold = 100;
+//TODO TRESHOLD CHANGE SIZE
+        threshold = 10;
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
 
@@ -201,6 +204,9 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public void onCameraViewStarted(int width, int height) {
 
+        cameraScreenHeight = width;
+        cameraScreenWidth = height;
+
         Log.d("TAG_CAMERA_EW", "onCameraViewStarted: " + width + " height: " + height);
         Log.d("TAG_CAMERA_EW", "onCameraViewStarted: " + titleWidth + " height: " + titleHeight);
     }
@@ -242,10 +248,10 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
             int numberVertices = (int) approxCurve.total();
 
             double contourArea = Imgproc.contourArea(cnt);
-
-            if (Math.abs(contourArea) < 100) {
-                continue;
-            }
+// TODO rendering rectangle size
+//            if (Math.abs(contourArea) < 2 && Math.abs(contourArea) > 50) {
+//                continue;
+//            }
 
             //Rectangle detected
             if (numberVertices >= 4 && numberVertices <= 6) {
@@ -320,14 +326,28 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         Log.d("TAG_RECT", "setLabel: x = " + r.width + " Y = " + r.height);
         Point pt = new Point(r.x + ((r.width - text.width) / 2), r.y + ((r.height + text.height) / 2));
         //todo you can check view with x and y
-        Log.d("TAG_DRAW_X", "setLabel: "+r.x+" "+r.y);
+        Log.d("TAG_DRAW_X", "setLabel: " + r.x + " " + r.y);
 
-        if ((r.x >= 600 && r.x < 640) && (r.y >= 400 && r.y <= 480)) {
+        int marginByTitleAndCareRendering = Math.abs((cameraScreenHeight - titleHeight) / 2);
+
+        if ((r.x >= marginByTitleAndCareRendering && r.x < marginByTitleAndCareRendering + 40) && (r.y >= 0 && r.y <= 80)) {
             Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
             rTopView.setBackgroundResource(R.drawable.rectangel_gree);
-
+        }
+        if ((r.x >= marginByTitleAndCareRendering && r.x < marginByTitleAndCareRendering + 40) && (r.y >= titleWidth && r.y <= titleWidth + 80)) {
+            Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
+            lTopView.setBackgroundResource(R.drawable.rectangel_gree);
+        }
+        int heightScreen = cameraScreenHeight - marginByTitleAndCareRendering;
+        if ((r.x >= heightScreen - 40 && r.x < heightScreen) && (r.y >= titleWidth && r.y <= titleWidth + 80)) {
+            Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
+            lBottomView.setBackgroundResource(R.drawable.rectangel_gree);
         }
 
+        if ((r.x >= heightScreen - 40 && r.x < heightScreen) && (r.y >= 0 && r.y <= 80)) {
+            Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
+            rBottomView.setBackgroundResource(R.drawable.rectangel_gree);
+        }
 
     }
 }

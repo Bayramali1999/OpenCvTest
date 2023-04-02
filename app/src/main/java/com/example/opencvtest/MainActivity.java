@@ -40,9 +40,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     int activeCamera = CameraBridgeViewBase.CAMERA_ID_BACK;
     List<MatOfPoint> contours;
 
-    View view;
-
-    Button button;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -50,7 +47,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        view = findViewById(R.id.l_corner_view);
 
     }
 

@@ -4,9 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,16 +15,18 @@ import androidx.core.content.ContextCompat;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.CvType;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -35,7 +35,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     CameraBridgeViewBase cameraBridgeViewBase;
     BaseLoaderCallback baseLoaderCallback;
 
-    Mat mRgba, intermediaMat, mGray, hierarchy;
+    Mat bwIMG, hsvIMG, lrrIMG, urrIMG, dsIMG, usIMG, cIMG, hovIMG;
+    MatOfPoint2f approxCurve;
 
     int activeCamera = CameraBridgeViewBase.CAMERA_ID_BACK;
     List<MatOfPoint> contours;
@@ -65,13 +66,22 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         cameraBridgeViewBase = findViewById(R.id.cameraView);
         cameraBridgeViewBase.setVisibility(View.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this);
-        cameraBridgeViewBase.setCameraIndex(this.activeCamera);
         baseLoaderCallback = new BaseLoaderCallback(this) {
             @Override
             public void onManagerConnected(int status) {
                 super.onManagerConnected(status);
                 switch (status) {
                     case BaseLoaderCallback.SUCCESS:
+                        bwIMG = new Mat();
+                        dsIMG = new Mat();
+                        hsvIMG = new Mat();
+                        lrrIMG = new Mat();
+                        urrIMG = new Mat();
+                        usIMG = new Mat();
+                        cIMG = new Mat();
+                        hovIMG = new Mat();
+                        approxCurve = new MatOfPoint2f();
+
                         cameraBridgeViewBase.enableView();
                         break;
                     default:
@@ -91,81 +101,83 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        mRgba = new Mat(width, height, CvType.CV_8UC4);
-        mGray = new Mat(width, height, CvType.CV_8UC1);
-        intermediaMat = new Mat(width, height, CvType.CV_8UC4);
-        hierarchy = new Mat();
     }
 
     @Override
     public void onCameraViewStopped() {
-        mRgba.release();
-        intermediaMat.release();
-        mGray.release();
-        hierarchy.release();
     }
 
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        mRgba = inputFrame.rgba();
-        mGray = new Mat();
+        Mat dst = inputFrame.rgba();
+        Mat gray = inputFrame.gray();
         contours = new ArrayList<>();
 
-        Imgproc.Canny(mRgba, intermediaMat, 100, 100);
-        //Pointdagi 0 obyektni burchlari siljishi
-        Imgproc.findContours(intermediaMat, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+        Imgproc.pyrDown(gray, dsIMG, new Size(gray.cols() / 2, gray.rows() / 2));
+        Imgproc.pyrUp(dsIMG, usIMG, gray.size());
+        Imgproc.Canny(usIMG, bwIMG, 0, 100);
+        Imgproc.dilate(bwIMG, bwIMG, new Mat(), new Point(-1, 1), 1);
+        cIMG = bwIMG.clone();
 
-        hierarchy.release();
-
-        for (int i = 0; i < contours.size(); i++) {
-
-            MatOfPoint2f approxCurve = new MatOfPoint2f();
-            MatOfPoint2f contour2f = new MatOfPoint2f(contours.get(i).toArray());
-
-            double approxDistance = Imgproc.arcLength(contour2f, true) * 0.01;
-            Imgproc.approxPolyDP(contour2f, approxCurve, approxDistance, true);
-            MatOfPoint points = new MatOfPoint(approxCurve.toArray());
+        Imgproc.findContours(cIMG, contours, hovIMG, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
 
-            //u need all of here
-            Rect rect = Imgproc.boundingRect(points);
-            double height = rect.height;
-            double width = rect.width;
-//            height > 300 && width > 300
-            //height and width rendering rectangles size
-            int x = rect.x;
-            int y = rect.y;
-//            view.setX(rect.x);
-//            view.setY(rect.y);
+        for (MatOfPoint cnt : contours) {
+            MatOfPoint2f curve = new MatOfPoint2f(cnt.toArray());
+            Imgproc.approxPolyDP(curve, approxCurve, 0.02 * Imgproc.arcLength(curve, true), true);
+            int numberVertices = (int) approxCurve.total();
+            double contourArea = Imgproc.contourArea(cnt);
 
-            if (width > 200 && height > 200) {
+            if (Math.abs(contourArea) < 10) {
+                continue;
+            }
 
-                Log.d("TAG_CAM_FRAME", "rect.height" + rect.height);
-                Log.d("TAG_CAM_FRAME", "rect.width" + rect.width);
-                Log.d("TAG_CAM_FRAME", "rect.x" + rect.x);
-                Log.d("TAG_CAM_FRAME", "rect.y" + rect.y);
-                Log.d("TAG_CAM_FRAME", "rect.tl()" + rect.tl());
-                Log.d("TAG_CAM_FRAME", "rect.area()" + rect.area());
-
-
-                Imgproc.rectangle(mRgba, new Point(rect.x, rect.y), new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 255, 0, 0), 5);
-//                Imgproc.putText(mRgba, "a", rect.tl(), Core.FONT_HERSHEY_SCRIPT_SIMPLEX, 2, new Scalar(0, 255, 0, 0), 4);
+            if (numberVertices >= 4 && numberVertices <= 6) {
+                List<Double> cos = new ArrayList<>();
+                for (int i = 2; i < numberVertices + 1; i++) {
+                    cos.add(angle(approxCurve.toArray()[i % numberVertices], approxCurve.toArray()[i - 2], approxCurve.toArray()[i - 1]));
+                }
+                Collections.sort(cos);
+                double mincos = cos.get(0);
+                double maxcos = cos.get(cos.size() - 1);
+                if (numberVertices == 4 && mincos >= -0.1 && maxcos <= 0.3) {
+                    setLabel(dst, "x", cnt);
+                }
             }
         }
-        return mRgba;
+
+        return dst;
     }
 
+    private void setLabel(Mat im, String label, MatOfPoint contour) {
+        int fontface = Core.FONT_HERSHEY_SIMPLEX;
+        double scale = 3;//0.4;
+        int thickness = 3;//1;
+        int[] baseline = new int[1];
+        Size text = Imgproc.getTextSize(label, fontface, scale, thickness, baseline);
+        Rect r = Imgproc.boundingRect(contour);
+        Point pt = new Point(r.x + ((r.width - text.width) / 2), r.y + ((r.height + text.height) / 2));
+        //todo you can check view with x and y
+        if ((r.x >= 0 && r.x < 60) && (r.y >= 0 && r.y <= 80)) {
+            Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
+        }
+    }
+
+    private static double angle(Point pt1, Point pt2, Point pt0) {
+        double dx1 = pt1.x - pt0.x;
+        double dy1 = pt1.y - pt0.y;
+        double dx2 = pt2.x - pt0.x;
+        double dy2 = pt2.y - pt0.y;
+        return (dx1 * dx2 + dy1 * dy2) / Math.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) !=
-                PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    CAM_REQ_CODE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAM_REQ_CODE);
         } else {
             loadCamera();
         }
@@ -174,14 +186,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     protected void onPause() {
         super.onPause();
-        if (cameraBridgeViewBase != null)
-            cameraBridgeViewBase.disableView();
+        if (cameraBridgeViewBase != null) cameraBridgeViewBase.disableView();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (cameraBridgeViewBase != null)
-            cameraBridgeViewBase.disableView();
+        if (cameraBridgeViewBase != null) cameraBridgeViewBase.disableView();
     }
 }

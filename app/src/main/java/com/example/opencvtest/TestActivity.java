@@ -1,7 +1,6 @@
 package com.example.opencvtest;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaActionSound;
@@ -17,7 +16,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -174,49 +172,31 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat gray = inputFrame.gray();
         Mat dst = inputFrame.rgba();
-
         Imgproc.pyrDown(gray, dsIMG, new Size(gray.cols() / 2, gray.rows() / 2));
         Imgproc.pyrUp(dsIMG, usIMG, gray.size());
-
         Imgproc.Canny(usIMG, bwIMG, 0, threshold);
-
         Imgproc.dilate(bwIMG, bwIMG, new Mat(), new Point(-1, 1), 1);
-
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-
         cIMG = bwIMG.clone();
-
         Imgproc.findContours(cIMG, contours, hovIMG, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
         Log.d("TAG_TEST_NEW_RENDER", "onCameraFrame: ");
         rTopView.setBackgroundResource(R.drawable.rectangel_red);
         for (MatOfPoint cnt : contours) {
-
             MatOfPoint2f curve = new MatOfPoint2f(cnt.toArray());
-
             Imgproc.approxPolyDP(curve, approxCurve, 0.02 * Imgproc.arcLength(curve, true), true);
-
             int numberVertices = (int) approxCurve.total();
-
             double contourArea = Imgproc.contourArea(cnt);
-
             if (Math.abs(contourArea) < 100) {
                 continue;
             }
-
-            //Rectangle detected
             if (numberVertices >= 4 && numberVertices <= 6) {
-
                 List<Double> cos = new ArrayList<>();
-
                 for (int j = 2; j < numberVertices + 1; j++) {
                     cos.add(angle(approxCurve.toArray()[j % numberVertices], approxCurve.toArray()[j - 2], approxCurve.toArray()[j - 1]));
                 }
-
                 Collections.sort(cos);
-
                 double mincos = cos.get(0);
                 double maxcos = cos.get(cos.size() - 1);
-
                 if (numberVertices == 4 && mincos >= -0.1 && maxcos <= 0.3) {
                     setLabel(dst, "X", cnt);
                 }
@@ -275,9 +255,6 @@ public class TestActivity extends AppCompatActivity implements CameraBridgeViewB
         //todo you can check view with x and y
         if ((r.x >= 0 && r.x < 60) && (r.y >= 0 && r.y <= 80)) {
             Imgproc.putText(im, label, pt, fontface, scale, new Scalar(255, 0, 0), thickness);
-            rTopView.setBackgroundResource(R.drawable.rectangel_gree);
         }
-
-        Log.d("TAG_MAX", "setLabel: x = " + r.x + " y = " + r.y);
     }
 }
